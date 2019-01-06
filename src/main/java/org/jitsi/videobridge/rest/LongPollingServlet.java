@@ -15,9 +15,12 @@
  */
 package org.jitsi.videobridge.rest;
 
-import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Implements a {@code Servlet} which enables long polling with asynchronous
@@ -25,20 +28,14 @@ import javax.servlet.http.*;
  *
  * @author Lyubomir Marinov
  */
-class LongPollingServlet
-    extends HttpServlet
-{
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void doGet(
-            HttpServletRequest request,
-            HttpServletResponse response)
-        throws IOException,
-               ServletException
-    {
-        // TODO Auto-generated method stub
-        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    }
+class LongPollingServlet extends HttpServlet {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		// TODO Auto-generated method stub
+		response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+	}
 }

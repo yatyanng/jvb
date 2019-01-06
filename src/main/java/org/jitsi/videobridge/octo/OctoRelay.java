@@ -15,10 +15,14 @@
  */
 package org.jitsi.videobridge.octo;
 
-import org.ice4j.socket.*;
-import org.jitsi.util.*;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
-import java.net.*;
+import org.ice4j.socket.MultiplexingDatagramSocket;
+import org.jitsi.util.Logger;
 
 /**
  * Implements a bridge-to-bridge (Octo) relay. This class is responsible for
@@ -28,98 +32,84 @@ import java.net.*;
  *
  * @author Boris Grozev
  */
-public class OctoRelay
-{
-    /**
-     * The {@link Logger} used by the {@link OctoRelay} class and its
-     * instances to print debug information.
-     */
-    private static final Logger logger
-        = Logger.getLogger(OctoRelay.class);
+public class OctoRelay {
+	/**
+	 * The {@link Logger} used by the {@link OctoRelay} class and its instances to
+	 * print debug information.
+	 */
+	private static final Logger logger = Logger.getLogger(OctoRelay.class);
 
-    /**
-     * The socket used to send and receive Octo packets.
-     */
-    private MultiplexingDatagramSocket socket;
+	/**
+	 * The socket used to send and receive Octo packets.
+	 */
+	private MultiplexingDatagramSocket socket;
 
-    /**
-     * The Octo relay ID which will be advertised by jitsi-videobridge.
-     * Other bridges can use this ID in order to discover the socket address
-     * that this bridge is accessible on. With the current implementation the
-     * ID just encodes a pre-configured IP address and port,
-     * e.g. "10.0.0.1:20000"
-     */
-    private String relayId;
-    
-    private String publicAddress;
+	/**
+	 * The Octo relay ID which will be advertised by jitsi-videobridge. Other
+	 * bridges can use this ID in order to discover the socket address that this
+	 * bridge is accessible on. With the current implementation the ID just encodes
+	 * a pre-configured IP address and port, e.g. "10.0.0.1:20000"
+	 */
+	private String relayId;
 
-    private int port;
+	private String publicAddress;
 
-    /**
-     * Initializes a new {@link OctoRelay} instance, binding on a specific
-     * address and port.
-     * @param address the address on which to bind.
-     * @param port the port on which to bind.
-     */
-    public OctoRelay(String address, int port)
-        throws UnknownHostException, SocketException
-    {
-        DatagramSocket s
-            = new DatagramSocket(
-                    new InetSocketAddress(InetAddress.getByName(address), port));
-        socket = new MultiplexingDatagramSocket(s, true /* persistent */);
-        this.port = port;
-        String id = address + ":" + port;
-        setRelayId(id);
-    }
+	private int port;
 
-    /**
-     * Stops this {@link OctoRelay}, closing its {@link DatagramSocket}.
-     */
-    void stop()
-    {
-        try
-        {
-            socket.close();
-        }
-        catch (Exception e)
-        {
-            logger.warn("Failed to stop OctoRelay: ", e);
-        }
-    }
+	/**
+	 * Initializes a new {@link OctoRelay} instance, binding on a specific address
+	 * and port.
+	 * 
+	 * @param address the address on which to bind.
+	 * @param port    the port on which to bind.
+	 */
+	public OctoRelay(String address, int port) throws UnknownHostException, SocketException {
+		DatagramSocket s = new DatagramSocket(new InetSocketAddress(InetAddress.getByName(address), port));
+		socket = new MultiplexingDatagramSocket(s, true /* persistent */);
+		this.port = port;
+		String id = address + ":" + port;
+		setRelayId(id);
+	}
 
-    /**
-     * @return the ID of this {@link OctoRelay}.
-     */
-    public String getId()
-    {
-        return relayId;
-    }
-    
-    /**
-    * Set the relayId
-    **/
-    public void setRelayId(String id)
-    {
-        relayId = id;
-    }
-    
-    /**
-    * Set the public address to be used as part of relayId
-    **/
-    public void setPublicAddress(String address)
-    {
-         publicAddress = address;
-         String id = publicAddress + ":" + port;
-         setRelayId(id);
-    }
+	/**
+	 * Stops this {@link OctoRelay}, closing its {@link DatagramSocket}.
+	 */
+	void stop() {
+		try {
+			socket.close();
+		} catch (Exception e) {
+			logger.warn("Failed to stop OctoRelay: ", e);
+		}
+	}
 
-    /**
-     * @return  the {@link MultiplexingDatagramSocket} used by this
-     * {@link OctoRelay}.
-     */
-    public MultiplexingDatagramSocket getSocket()
-    {
-        return socket;
-    }
+	/**
+	 * @return the ID of this {@link OctoRelay}.
+	 */
+	public String getId() {
+		return relayId;
+	}
+
+	/**
+	 * Set the relayId
+	 **/
+	public void setRelayId(String id) {
+		relayId = id;
+	}
+
+	/**
+	 * Set the public address to be used as part of relayId
+	 **/
+	public void setPublicAddress(String address) {
+		publicAddress = address;
+		String id = publicAddress + ":" + port;
+		setRelayId(id);
+	}
+
+	/**
+	 * @return the {@link MultiplexingDatagramSocket} used by this
+	 *         {@link OctoRelay}.
+	 */
+	public MultiplexingDatagramSocket getSocket() {
+		return socket;
+	}
 }

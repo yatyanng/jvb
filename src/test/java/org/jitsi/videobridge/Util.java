@@ -15,83 +15,69 @@
  */
 package org.jitsi.videobridge;
 
-import java.util.function.*;
-
 import static junit.framework.TestCase.assertEquals;
+
+import java.util.function.Supplier;
 
 /**
  * Test utilities.
  *
  * @author Boris Grozev
  */
-public class Util
-{
-    /**
-     * Tries to take a nap, but isn't grumpy if it's woken up early.
-     * @param millis the number of milliseconds to sleep.
-     */
-    public static void sleepNoExceptions(long millis)
-    {
-        try
-        {
-            Thread.sleep(millis);
-        }
-        catch (InterruptedException ie)
-        {
-        }
-    }
+public class Util {
+	/**
+	 * Tries to take a nap, but isn't grumpy if it's woken up early.
+	 * 
+	 * @param millis the number of milliseconds to sleep.
+	 */
+	public static void sleepNoExceptions(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException ie) {
+		}
+	}
 
-    /**
-     * Retries a function call ({@code f}) up to {@code attempts} times until
-     * it produces the {@code expected} result, sleeping for
-     * {@code millisToWait} in between attempts. If the function doesn't produce
-     * the expected result after {@code attempts} attempts, throws an exception.
-     *
-     * @param millisToWait the number of milliseconds to wait in total.
-     * @param attempts
-     * @param message The message to throw in case of failure.
-     * @param expected The expected result.
-     * @param f The function which produces the actual result.
-     */
-    public static void waitForEquals(
-        long millisToWait,
-        int attempts,
-        String message,
-        Object expected,
-        Supplier<Object> f)
-    {
-        Object actual;
-        int i = 0;
+	/**
+	 * Retries a function call ({@code f}) up to {@code attempts} times until it
+	 * produces the {@code expected} result, sleeping for {@code millisToWait} in
+	 * between attempts. If the function doesn't produce the expected result after
+	 * {@code attempts} attempts, throws an exception.
+	 *
+	 * @param millisToWait the number of milliseconds to wait in total.
+	 * @param attempts
+	 * @param message      The message to throw in case of failure.
+	 * @param expected     The expected result.
+	 * @param f            The function which produces the actual result.
+	 */
+	public static void waitForEquals(long millisToWait, int attempts, String message, Object expected,
+			Supplier<Object> f) {
+		Object actual;
+		int i = 0;
 
-        do {
-            actual = f.get();
-            if (expected.equals(actual))
-            {
-                return;
-            }
+		do {
+			actual = f.get();
+			if (expected.equals(actual)) {
+				return;
+			}
 
-            sleepNoExceptions(millisToWait);
-            i++;
-        } while (i < attempts);
+			sleepNoExceptions(millisToWait);
+			i++;
+		} while (i < attempts);
 
-        assertEquals(message, expected, actual);
-    }
+		assertEquals(message, expected, actual);
+	}
 
-    /**
-     * Retries a function call ({@code f}) up to 5 times until
-     * it produces the {@code expected} result, sleeping for 500 milliseconds
-     * in between attempts. If the function doesn't produce the expected result
-     * after {@code attempts} attempts, throws an exception.
-     *
-     * @param message The message to throw in case of failure.
-     * @param expected The expected result.
-     * @param f The function which produces the actual result.
-     */
-    public static void waitForEquals(
-        String message,
-        Object expected,
-        Supplier<Object> f)
-    {
-        waitForEquals(500, 5, message, expected, f);
-    }
+	/**
+	 * Retries a function call ({@code f}) up to 5 times until it produces the
+	 * {@code expected} result, sleeping for 500 milliseconds in between attempts.
+	 * If the function doesn't produce the expected result after {@code attempts}
+	 * attempts, throws an exception.
+	 *
+	 * @param message  The message to throw in case of failure.
+	 * @param expected The expected result.
+	 * @param f        The function which produces the actual result.
+	 */
+	public static void waitForEquals(String message, Object expected, Supplier<Object> f) {
+		waitForEquals(500, 5, message, expected, f);
+	}
 }

@@ -15,93 +15,72 @@
  */
 package org.jitsi.videobridge;
 
-import org.json.simple.*;
-import org.json.simple.parser.*;
-import org.junit.*;
+import static org.jitsi.videobridge.EndpointMessageBuilder.COLIBRI_CLASS_DOMINANT_SPEAKER_CHANGE;
+import static org.jitsi.videobridge.EndpointMessageBuilder.COLIBRI_CLASS_ENDPOINT_CONNECTIVITY_STATUS;
+import static org.jitsi.videobridge.EndpointMessageBuilder.COLIBRI_CLASS_LASTN_ENDPOINTS_CHANGED;
+import static org.jitsi.videobridge.EndpointMessageBuilder.COLIBRI_CLASS_SERVER_HELLO;
+import static org.jitsi.videobridge.EndpointMessageBuilder.createDominantSpeakerEndpointChangeEvent;
+import static org.jitsi.videobridge.EndpointMessageBuilder.createEndpointConnectivityStatusChangeEvent;
+import static org.jitsi.videobridge.EndpointMessageBuilder.createLastNEndpointsChangeEvent;
+import static org.jitsi.videobridge.EndpointMessageBuilder.createServerHelloEvent;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import java.util.*;
+import java.util.Arrays;
 
-import static org.junit.Assert.*;
-import static org.jitsi.videobridge.EndpointMessageBuilder.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.junit.Test;
 
-public class EndpointMessageBuilderTest
-{
-    @Test
-    public void testServerHello()
-        throws Exception
-    {
-        String str = createServerHelloEvent();
-        JSONObject json = (JSONObject) new JSONParser().parse(str);
-        assertEquals(COLIBRI_CLASS_SERVER_HELLO,
-                     json.get(Videobridge.COLIBRI_CLASS));
-    }
+public class EndpointMessageBuilderTest {
+	@Test
+	public void testServerHello() throws Exception {
+		String str = createServerHelloEvent();
+		JSONObject json = (JSONObject) new JSONParser().parse(str);
+		assertEquals(COLIBRI_CLASS_SERVER_HELLO, json.get(Videobridge.COLIBRI_CLASS));
+	}
 
-    @Test
-    public void testDominantSpeakerEndpointChange()
-        throws Exception
-    {
-        String id = "abc123";
-        String str = createDominantSpeakerEndpointChangeEvent(id);
+	@Test
+	public void testDominantSpeakerEndpointChange() throws Exception {
+		String id = "abc123";
+		String str = createDominantSpeakerEndpointChangeEvent(id);
 
-        JSONObject json = (JSONObject) new JSONParser().parse(str);
-        assertEquals(COLIBRI_CLASS_DOMINANT_SPEAKER_CHANGE,
-                     json.get(Videobridge.COLIBRI_CLASS));
-        assertEquals(id,
-                     json.get("dominantSpeakerEndpoint"));
-    }
+		JSONObject json = (JSONObject) new JSONParser().parse(str);
+		assertEquals(COLIBRI_CLASS_DOMINANT_SPEAKER_CHANGE, json.get(Videobridge.COLIBRI_CLASS));
+		assertEquals(id, json.get("dominantSpeakerEndpoint"));
+	}
 
-    @Test
-    public void testEndpointConnectivityStatusChangeEvent()
-        throws Exception
-    {
-        String id = "abc123";
-        boolean status = false;
-        String str = createEndpointConnectivityStatusChangeEvent(id, status);
+	@Test
+	public void testEndpointConnectivityStatusChangeEvent() throws Exception {
+		String id = "abc123";
+		boolean status = false;
+		String str = createEndpointConnectivityStatusChangeEvent(id, status);
 
-        JSONObject json = (JSONObject) new JSONParser().parse(str);
-        assertEquals(COLIBRI_CLASS_ENDPOINT_CONNECTIVITY_STATUS,
-                     json.get(Videobridge.COLIBRI_CLASS));
-        assertEquals(id,
-                     json.get("endpoint"));
-        assertEquals(Boolean.toString(status),
-                     json.get("active"));
-    }
+		JSONObject json = (JSONObject) new JSONParser().parse(str);
+		assertEquals(COLIBRI_CLASS_ENDPOINT_CONNECTIVITY_STATUS, json.get(Videobridge.COLIBRI_CLASS));
+		assertEquals(id, json.get("endpoint"));
+		assertEquals(Boolean.toString(status), json.get("active"));
+	}
 
-    @Test
-    public void testLastNEndpointsChangeEvent()
-        throws Exception
-    {
-        String[] forwardedEndpoints = new String[]{"a", "b", "c"};
-        String[] endpointsEnteringLastN = new String[]{"b", "c"};
-        String[] conferenceEndpoints = new String[]{"a", "b", "c", "d"};
+	@Test
+	public void testLastNEndpointsChangeEvent() throws Exception {
+		String[] forwardedEndpoints = new String[] { "a", "b", "c" };
+		String[] endpointsEnteringLastN = new String[] { "b", "c" };
+		String[] conferenceEndpoints = new String[] { "a", "b", "c", "d" };
 
-        String str
-            = createLastNEndpointsChangeEvent(
-                Arrays.asList(forwardedEndpoints),
-                Arrays.asList(endpointsEnteringLastN),
-                Arrays.asList(conferenceEndpoints));
+		String str = createLastNEndpointsChangeEvent(Arrays.asList(forwardedEndpoints),
+				Arrays.asList(endpointsEnteringLastN), Arrays.asList(conferenceEndpoints));
 
-        JSONObject json = (JSONObject) new JSONParser().parse(str);
-        assertEquals(COLIBRI_CLASS_LASTN_ENDPOINTS_CHANGED,
-                     json.get(Videobridge.COLIBRI_CLASS));
+		JSONObject json = (JSONObject) new JSONParser().parse(str);
+		assertEquals(COLIBRI_CLASS_LASTN_ENDPOINTS_CHANGED, json.get(Videobridge.COLIBRI_CLASS));
 
-        JSONArray forwardedEndpointsJson = (JSONArray) json.get("lastNEndpoints");
-        JSONArray endpointsEnteringLastNJson
-            = (JSONArray) json.get("endpointsEnteringLastN");
-        JSONArray conferenceEndpointsJson
-            = (JSONArray) json.get("conferenceEndpoints");
+		JSONArray forwardedEndpointsJson = (JSONArray) json.get("lastNEndpoints");
+		JSONArray endpointsEnteringLastNJson = (JSONArray) json.get("endpointsEnteringLastN");
+		JSONArray conferenceEndpointsJson = (JSONArray) json.get("conferenceEndpoints");
 
-        assertTrue(
-            Arrays.equals(
-                forwardedEndpointsJson.toArray(),
-                forwardedEndpoints));
-        assertTrue(
-            Arrays.equals(
-                endpointsEnteringLastNJson.toArray(),
-                endpointsEnteringLastN));
-        assertTrue(
-            Arrays.equals(
-                conferenceEndpointsJson.toArray(),
-                conferenceEndpoints));
-    }
+		assertTrue(Arrays.equals(forwardedEndpointsJson.toArray(), forwardedEndpoints));
+		assertTrue(Arrays.equals(endpointsEnteringLastNJson.toArray(), endpointsEnteringLastN));
+		assertTrue(Arrays.equals(conferenceEndpointsJson.toArray(), conferenceEndpoints));
+	}
 }

@@ -15,97 +15,80 @@
  */
 package org.jitsi.videobridge.stats;
 
-import java.util.*;
+import java.util.Collection;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
-import net.java.sip.communicator.util.*;
+import org.jitsi.videobridge.Conference;
+import org.jitsi.videobridge.Videobridge;
+import org.jitsi.videobridge.xmpp.ComponentImpl;
+import org.jivesoftware.smack.packet.IQ;
+import org.jxmpp.jid.Jid;
+import org.osgi.framework.BundleContext;
 
-import org.jitsi.videobridge.*;
-import org.jitsi.videobridge.xmpp.*;
-import org.jivesoftware.smack.packet.*;
-import org.jxmpp.jid.*;
-import org.osgi.framework.*;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.ColibriStatsIQ;
+import net.java.sip.communicator.util.Logger;
 
 /**
  * Implements <tt>StatsTransport</tt> for COLIBRI IQ packets.
  *
  * @author Hristo Terezov
  */
-public class ColibriStatsTransport
-    extends StatsTransport
-{
-    /**
-     * The <tt>Logger</tt> used by the <tt>ColibriStatsTransport</tt> class and
-     * its instances to print debug information.
-     */
-    private static final Logger logger
-        = Logger.getLogger(ColibriStatsTransport.class);
+public class ColibriStatsTransport extends StatsTransport {
+	/**
+	 * The <tt>Logger</tt> used by the <tt>ColibriStatsTransport</tt> class and its
+	 * instances to print debug information.
+	 */
+	private static final Logger logger = Logger.getLogger(ColibriStatsTransport.class);
 
-    /**
-     * Builds the IQ packet that will be sent.
-     * @param statistics the statistics that will be sent
-     * @return the packet that will be sent.
-     */
-    private static IQ buildStatsIQ(Statistics statistics)
-    {
-        ColibriStatsIQ iq = Statistics.toXmppIq(statistics);
-        iq.setType(IQ.Type.result);
-        return iq;
-    }
+	/**
+	 * Builds the IQ packet that will be sent.
+	 * 
+	 * @param statistics the statistics that will be sent
+	 * @return the packet that will be sent.
+	 */
+	private static IQ buildStatsIQ(Statistics statistics) {
+		ColibriStatsIQ iq = Statistics.toXmppIq(statistics);
+		iq.setType(IQ.Type.result);
+		return iq;
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void publishStatistics(Statistics stats)
-    {
-        BundleContext bundleContext = getBundleContext();
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void publishStatistics(Statistics stats) {
+		BundleContext bundleContext = getBundleContext();
 
-        if (bundleContext != null)
-        {
-            Collection<Videobridge> videobridges
-                = Videobridge.getVideobridges(bundleContext);
-            IQ statsIQ = null;
+		if (bundleContext != null) {
+			Collection<Videobridge> videobridges = Videobridge.getVideobridges(bundleContext);
+			IQ statsIQ = null;
 
-            for (Videobridge videobridge : videobridges)
-            {
-                Collection<ComponentImpl> components
-                    = videobridge.getComponents();
+			for (Videobridge videobridge : videobridges) {
+				Collection<ComponentImpl> components = videobridge.getComponents();
 
-                if (!components.isEmpty())
-                {
-                    Conference[] conferences = videobridge.getConferences();
+				if (!components.isEmpty()) {
+					Conference[] conferences = videobridge.getConferences();
 
-                    if (conferences.length != 0)
-                    {
-                        if (statsIQ == null)
-                            statsIQ = buildStatsIQ(stats);
+					if (conferences.length != 0) {
+						if (statsIQ == null)
+							statsIQ = buildStatsIQ(stats);
 
-                        for (Conference conference : conferences)
-                        {
-                            Jid focus = conference.getLastKnowFocus();
+						for (Conference conference : conferences) {
+							Jid focus = conference.getLastKnowFocus();
 
-                            if (focus != null)
-                            {
-                                statsIQ.setTo(focus);
-                                for (ComponentImpl component : components)
-                                {
-                                    try
-                                    {
-                                        component.send(statsIQ);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        logger.error(
-                                                "Failed to publish"
-                                                    + " statistics.");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+							if (focus != null) {
+								statsIQ.setTo(focus);
+								for (ComponentImpl component : components) {
+									try {
+										component.send(statsIQ);
+									} catch (Exception ex) {
+										logger.error("Failed to publish" + " statistics.");
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

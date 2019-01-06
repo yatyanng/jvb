@@ -15,12 +15,14 @@
  */
 package org.jitsi.videobridge.rest;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.jetty.server.*;
-import org.jitsi.rest.*;
-import org.jitsi.videobridge.*;
-import org.osgi.framework.*;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Server;
+import org.jitsi.rest.AbstractJettyBundleActivator;
+import org.jitsi.videobridge.Videobridge;
+import org.osgi.framework.BundleContext;
 
 /**
  * Implements <tt>BundleActivator</tt> for the OSGi bundle which implements a
@@ -35,114 +37,91 @@ import org.osgi.framework.*;
  * @author Lyubomir Marinov
  * @author Boris Grozev
  */
-public class RESTBundleActivator
-    extends AbstractJettyBundleActivator
-{
-    /**
-     * The name of the <tt>System</tt> and <tt>ConfigurationService</tt>
-     * boolean property which enables graceful shutdown through REST API.
-     * It is disabled by default.
-     */
-    public static final String ENABLE_REST_SHUTDOWN_PNAME
-        = "org.jitsi.videobridge.ENABLE_REST_SHUTDOWN";
+public class RESTBundleActivator extends AbstractJettyBundleActivator {
+	/**
+	 * The name of the <tt>System</tt> and <tt>ConfigurationService</tt> boolean
+	 * property which enables graceful shutdown through REST API. It is disabled by
+	 * default.
+	 */
+	public static final String ENABLE_REST_SHUTDOWN_PNAME = "org.jitsi.videobridge.ENABLE_REST_SHUTDOWN";
 
-    /**
-     * The name of the <tt>System</tt> and <tt>ConfigurationService</tt>
-     * boolean property which enables <tt>/colibri/*</tt> REST API endpoints.
-     */
-    public static final String ENABLE_REST_COLIBRI_PNAME
-      = "org.jitsi.videobridge.ENABLE_REST_COLIBRI";
+	/**
+	 * The name of the <tt>System</tt> and <tt>ConfigurationService</tt> boolean
+	 * property which enables <tt>/colibri/*</tt> REST API endpoints.
+	 */
+	public static final String ENABLE_REST_COLIBRI_PNAME = "org.jitsi.videobridge.ENABLE_REST_COLIBRI";
 
-    /**
-     * The prefix of the property names for the Jetty instance managed by
-     * this {@link AbstractJettyBundleActivator}.
-     */
-    public static final String JETTY_PROPERTY_PREFIX
-        = "org.jitsi.videobridge.rest.private";
+	/**
+	 * The prefix of the property names for the Jetty instance managed by this
+	 * {@link AbstractJettyBundleActivator}.
+	 */
+	public static final String JETTY_PROPERTY_PREFIX = "org.jitsi.videobridge.rest.private";
 
-    /**
-     * Initializes a new {@code RESTBundleActivator} instance.
-     */
-    public RESTBundleActivator()
-    {
-        super(JETTY_PROPERTY_PREFIX);
-    }
+	/**
+	 * Initializes a new {@code RESTBundleActivator} instance.
+	 */
+	public RESTBundleActivator() {
+		super(JETTY_PROPERTY_PREFIX);
+	}
 
-    /**
-     * {@inheritDoc} 
-     */
-    @Override
-    protected void doStop(BundleContext bundleContext)
-        throws Exception
-    {
-        if (server != null)
-        {
-            // FIXME graceful Jetty shutdown
-            // When shutdown request is accepted, empty response is sent back
-            // instead of 200, because Jetty is not being shutdown gracefully.
-            Thread.sleep(1000);
-        }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void doStop(BundleContext bundleContext) throws Exception {
+		if (server != null) {
+			// FIXME graceful Jetty shutdown
+			// When shutdown request is accepted, empty response is sent back
+			// instead of 200, because Jetty is not being shutdown gracefully.
+			Thread.sleep(1000);
+		}
 
-        super.doStop(bundleContext);
-    }
+		super.doStop(bundleContext);
+	}
 
-    /**
-     * Initializes a new {@link Handler} instance which is to handle the
-     * &quot;/colibri&quot; target for a specific {@code Server} instance.
-     *
-     * @param bundleContext the {@code BundleContext} in which the new instance
-     * is to be initialized
-     * @param server the {@code Server} for which the new instance is to handle
-     * the &quot;/colibri&quot; target
-     * @return a new {@code Handler} instance which is to handle the
-     * &quot;/colibri&quot; target for {@code server}
-     */
-    private Handler initializeColibriHandler(
-            BundleContext bundleContext,
-            Server server)
-    {
-        return
-            new HandlerImpl(
-                    bundleContext,
-                    getCfgBoolean(ENABLE_REST_SHUTDOWN_PNAME, false),
-                    getCfgBoolean(ENABLE_REST_COLIBRI_PNAME, true));
-    }
+	/**
+	 * Initializes a new {@link Handler} instance which is to handle the
+	 * &quot;/colibri&quot; target for a specific {@code Server} instance.
+	 *
+	 * @param bundleContext the {@code BundleContext} in which the new instance is
+	 *                      to be initialized
+	 * @param server        the {@code Server} for which the new instance is to
+	 *                      handle the &quot;/colibri&quot; target
+	 * @return a new {@code Handler} instance which is to handle the
+	 *         &quot;/colibri&quot; target for {@code server}
+	 */
+	private Handler initializeColibriHandler(BundleContext bundleContext, Server server) {
+		return new HandlerImpl(bundleContext, getCfgBoolean(ENABLE_REST_SHUTDOWN_PNAME, false),
+				getCfgBoolean(ENABLE_REST_COLIBRI_PNAME, true));
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected Handler initializeHandlerList(
-            BundleContext bundleContext,
-            Server server)
-        throws Exception
-    {
-        List<Handler> handlers = new ArrayList<>();
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected Handler initializeHandlerList(BundleContext bundleContext, Server server) throws Exception {
+		List<Handler> handlers = new ArrayList<>();
 
-        // The /colibri target of the REST API.
-        Handler colibriHandler
-            = initializeColibriHandler(bundleContext, server);
+		// The /colibri target of the REST API.
+		Handler colibriHandler = initializeColibriHandler(bundleContext, server);
 
-        if (colibriHandler != null)
-            handlers.add(colibriHandler);
+		if (colibriHandler != null)
+			handlers.add(colibriHandler);
 
-        return initializeHandlerList(handlers);
-    }
+		return initializeHandlerList(handlers);
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected boolean willStart(BundleContext bundleContext)
-        throws Exception
-    {
-        boolean b = super.willStart(bundleContext);
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected boolean willStart(BundleContext bundleContext) throws Exception {
+		boolean b = super.willStart(bundleContext);
 
-        if (b)
-        {
-            // The REST API of Videobridge does not start by default.
-            b = getCfgBoolean(Videobridge.REST_API_PNAME, false);
-        }
-        return b;
-    }
+		if (b) {
+			// The REST API of Videobridge does not start by default.
+			b = getCfgBoolean(Videobridge.REST_API_PNAME, false);
+		}
+		return b;
+	}
 }

@@ -15,7 +15,8 @@
  */
 package org.jitsi.videobridge.version;
 
-import org.jitsi.version.*;
+import org.jitsi.version.AbstractVersionActivator;
+import org.jitsi.version.CurrentVersion;
 
 /**
  * Extends {@link AbstractVersionActivator} in order to provider the
@@ -23,22 +24,18 @@ import org.jitsi.version.*;
  *
  * @author Pawel Domas
  */
-public class VersionActivator
-    extends AbstractVersionActivator
-{
-    /**
-     * The {@code CurrentVersionImpl} instance describing the current version
-     * of Jitsi Videobridge.
-     */
-    private static final CurrentVersionImpl CURRENT_VERSION
-        = new CurrentVersionImpl();
+public class VersionActivator extends AbstractVersionActivator {
+	/**
+	 * The {@code CurrentVersionImpl} instance describing the current version of
+	 * Jitsi Videobridge.
+	 */
+	private static final CurrentVersionImpl CURRENT_VERSION = new CurrentVersionImpl();
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected CurrentVersion getCurrentVersion()
-    {
-        return CURRENT_VERSION;
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected CurrentVersion getCurrentVersion() {
+		return CURRENT_VERSION;
+	}
 }

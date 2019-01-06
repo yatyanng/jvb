@@ -15,12 +15,15 @@
  */
 package org.jitsi.videobridge.octo;
 
-import org.jitsi.impl.neomedia.rtp.*;
-import org.jitsi.service.neomedia.*;
-import org.jitsi.util.*;
-import org.jitsi.videobridge.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
-import java.util.*;
+import org.jitsi.impl.neomedia.rtp.MediaStreamTrackDesc;
+import org.jitsi.service.neomedia.MediaType;
+import org.jitsi.util.ArrayUtils;
+import org.jitsi.videobridge.AbstractEndpoint;
+import org.jitsi.videobridge.Conference;
 
 /**
  * Represents an endpoint in a conference, which is connected to another
@@ -28,72 +31,60 @@ import java.util.*;
  *
  * @author Boris Grozev
  */
-public class OctoEndpoint
-    extends AbstractEndpoint
-{
-    OctoEndpoint(Conference conference, String id)
-    {
-        super(conference, id);
-    }
+public class OctoEndpoint extends AbstractEndpoint {
+	OctoEndpoint(Conference conference, String id) {
+		super(conference, id);
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void sendMessage(String msg)
-    {
-        // This is intentionally a no-op. Since a conference can have
-        // multiple OctoEndpoint instances, but we want a single message
-        // to be sent through Octo, the message should be sent through the
-        // single OctoEndpoints instance.
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void sendMessage(String msg) {
+		// This is intentionally a no-op. Since a conference can have
+		// multiple OctoEndpoint instances, but we want a single message
+		// to be sent through Octo, the message should be sent through the
+		// single OctoEndpoints instance.
+	}
 
-    /**
-     * {@inheritDoc}
-     * </p>
-     * {@link OctoEndpoint}s are added/removed solely based on signaling. An
-     * endpoint is expired when the signaled media stream tracks for the
-     * Octo channels do not include any tracks for this endpoint.
-     */
-    @Override
-    protected void maybeExpire()
-    {
-        MediaStreamTrackDesc[] audioTracks
-            = getMediaStreamTracks(MediaType.AUDIO);
-        MediaStreamTrackDesc[] videoTracks
-            = getMediaStreamTracks(MediaType.VIDEO);
+	/**
+	 * {@inheritDoc}
+	 * </p>
+	 * {@link OctoEndpoint}s are added/removed solely based on signaling. An
+	 * endpoint is expired when the signaled media stream tracks for the Octo
+	 * channels do not include any tracks for this endpoint.
+	 */
+	@Override
+	protected void maybeExpire() {
+		MediaStreamTrackDesc[] audioTracks = getMediaStreamTracks(MediaType.AUDIO);
+		MediaStreamTrackDesc[] videoTracks = getMediaStreamTracks(MediaType.VIDEO);
 
-        if (ArrayUtils.isNullOrEmpty(audioTracks)
-            && ArrayUtils.isNullOrEmpty(videoTracks))
-        {
-            expire();
-        }
-    }
+		if (ArrayUtils.isNullOrEmpty(audioTracks) && ArrayUtils.isNullOrEmpty(videoTracks)) {
+			expire();
+		}
+	}
 
-    /**
-     * @return the list of all {@link MediaStreamTrackDesc} (both audio and
-     * video) of this endpoint.
-     */
-    List<MediaStreamTrackDesc> getMediaStreamTracks()
-    {
-        List<MediaStreamTrackDesc> tracks = new LinkedList<>();
-        tracks.addAll(Arrays.asList(getMediaStreamTracks(MediaType.AUDIO)));
-        tracks.addAll(Arrays.asList(getMediaStreamTracks(MediaType.VIDEO)));
+	/**
+	 * @return the list of all {@link MediaStreamTrackDesc} (both audio and video)
+	 *         of this endpoint.
+	 */
+	List<MediaStreamTrackDesc> getMediaStreamTracks() {
+		List<MediaStreamTrackDesc> tracks = new LinkedList<>();
+		tracks.addAll(Arrays.asList(getMediaStreamTracks(MediaType.AUDIO)));
+		tracks.addAll(Arrays.asList(getMediaStreamTracks(MediaType.VIDEO)));
 
-        return tracks;
-    }
+		return tracks;
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MediaStreamTrackDesc[] getMediaStreamTracks(MediaType mediaType)
-    {
-        // With Octo a channel can have tracks belonging to different endpoints,
-        // so filter out only those that belong to this endpoint.
-        String id = getID();
-        return getAllMediaStreamTracks(mediaType).stream()
-            .filter(track -> id.equals(track.getOwner()))
-            .toArray(MediaStreamTrackDesc[]::new);
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public MediaStreamTrackDesc[] getMediaStreamTracks(MediaType mediaType) {
+		// With Octo a channel can have tracks belonging to different endpoints,
+		// so filter out only those that belong to this endpoint.
+		String id = getID();
+		return getAllMediaStreamTracks(mediaType).stream().filter(track -> id.equals(track.getOwner()))
+				.toArray(MediaStreamTrackDesc[]::new);
+	}
 }

@@ -15,8 +15,9 @@
  */
 package org.jitsi.videobridge;
 
-import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.recording.*;
+import org.jitsi.service.neomedia.MediaType;
+import org.jitsi.service.neomedia.recording.RecorderEvent;
+import org.jitsi.service.neomedia.recording.RecorderEventHandler;
 
 /**
  * An implementation of <tt>RecorderEventHandler</tt> which intercepts
@@ -28,90 +29,72 @@ import org.jitsi.service.neomedia.recording.*;
  *
  * @author Boris Grozev
  */
-class RecorderEventHandlerImpl
-    implements RecorderEventHandler
-{
-    /**
-     * The <tt>Conference</tt> which has initialized and is employing this
-     * instance.
-     */
-    private final Conference conference;
+class RecorderEventHandlerImpl implements RecorderEventHandler {
+	/**
+	 * The <tt>Conference</tt> which has initialized and is employing this instance.
+	 */
+	private final Conference conference;
 
-    private final RecorderEventHandler handler;
+	private final RecorderEventHandler handler;
 
-    RecorderEventHandlerImpl(
-            Conference conference,
-            RecorderEventHandler handler)
-        throws IllegalArgumentException
-    {
-        if (conference == null)
-            throw new NullPointerException("conference");
-        if (handler == null)
-            throw new NullPointerException("handler");
+	RecorderEventHandlerImpl(Conference conference, RecorderEventHandler handler) throws IllegalArgumentException {
+		if (conference == null)
+			throw new NullPointerException("conference");
+		if (handler == null)
+			throw new NullPointerException("handler");
 
-        this.conference = conference;
-        this.handler = handler;
-    }
+		this.conference = conference;
+		this.handler = handler;
+	}
 
-    @Override
-    public void close()
-    {
-        handler.close();
-    }
+	@Override
+	public void close() {
+		handler.close();
+	}
 
-    /**
-     * Notifies this instance that the dominant speaker in the conference
-     * has changed.
-     * @param endpoint the <tt>Endpoint</tt> corresponding to the new
-     * dominant speaker.
-     */
-    void dominantSpeakerChanged(AbstractEndpoint endpoint)
-    {
-        long ssrc = -1;
+	/**
+	 * Notifies this instance that the dominant speaker in the conference has
+	 * changed.
+	 * 
+	 * @param endpoint the <tt>Endpoint</tt> corresponding to the new dominant
+	 *                 speaker.
+	 */
+	void dominantSpeakerChanged(AbstractEndpoint endpoint) {
+		long ssrc = -1;
 
-        // find the first "video" SSRC for the new dominant endpoint
-        for (Channel c : endpoint.getChannels(MediaType.VIDEO))
-        {
-            int[] ssrcs = ((RtpChannel) c).getReceiveSSRCs();
+		// find the first "video" SSRC for the new dominant endpoint
+		for (Channel c : endpoint.getChannels(MediaType.VIDEO)) {
+			int[] ssrcs = ((RtpChannel) c).getReceiveSSRCs();
 
-            if (ssrcs != null && ssrcs.length > 0)
-            {
-                ssrc = ssrcs[0] & 0xffffffffL;
-                break;
-            }
-        }
-        if (ssrc != -1)
-        {
-            RecorderEvent event = new RecorderEvent();
+			if (ssrcs != null && ssrcs.length > 0) {
+				ssrc = ssrcs[0] & 0xffffffffL;
+				break;
+			}
+		}
+		if (ssrc != -1) {
+			RecorderEvent event = new RecorderEvent();
 
-            event.setType(RecorderEvent.Type.SPEAKER_CHANGED);
-            event.setMediaType(MediaType.VIDEO);
-            event.setSsrc(ssrc);
-            event.setEndpointId(endpoint.getID());
-            event.setInstant(System.currentTimeMillis());
-            handleEvent(event);
-        }
-    }
+			event.setType(RecorderEvent.Type.SPEAKER_CHANGED);
+			event.setMediaType(MediaType.VIDEO);
+			event.setSsrc(ssrc);
+			event.setEndpointId(endpoint.getID());
+			event.setInstant(System.currentTimeMillis());
+			handleEvent(event);
+		}
+	}
 
-    @Override
-    public boolean handleEvent(RecorderEvent event)
-    {
-        if (event.getEndpointId() == null)
-        {
-            long ssrc = event.getSsrc();
-            AbstractEndpoint endpoint
-                = conference.findEndpointByReceiveSSRC(ssrc, MediaType.AUDIO);
+	@Override
+	public boolean handleEvent(RecorderEvent event) {
+		if (event.getEndpointId() == null) {
+			long ssrc = event.getSsrc();
+			AbstractEndpoint endpoint = conference.findEndpointByReceiveSSRC(ssrc, MediaType.AUDIO);
 
-            if (endpoint == null)
-            {
-                endpoint
-                    = conference.findEndpointByReceiveSSRC(
-                            ssrc,
-                            MediaType.VIDEO);
-            }
-            if (endpoint != null)
-                event.setEndpointId(endpoint.getID());
-        }
-        return handler.handleEvent(event);
-    }
+			if (endpoint == null) {
+				endpoint = conference.findEndpointByReceiveSSRC(ssrc, MediaType.VIDEO);
+			}
+			if (endpoint != null)
+				event.setEndpointId(endpoint.getID());
+		}
+		return handler.handleEvent(event);
+	}
 }

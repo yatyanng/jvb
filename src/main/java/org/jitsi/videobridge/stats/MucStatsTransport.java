@@ -15,9 +15,10 @@
  */
 package org.jitsi.videobridge.stats;
 
-import net.java.sip.communicator.util.*;
+import org.jitsi.videobridge.xmpp.ClientConnectionImpl;
 
-import org.jitsi.videobridge.xmpp.*;
+import net.java.sip.communicator.util.Logger;
+import net.java.sip.communicator.util.ServiceUtils;
 
 /**
  * Implements a {@link StatsTransport} which publishes via Presence in an XMPP
@@ -25,50 +26,36 @@ import org.jitsi.videobridge.xmpp.*;
  *
  * @author Boris Grozev
  */
-public class MucStatsTransport
-    extends StatsTransport
-{
-    /**
-     * The <tt>Logger</tt> used by the <tt>MucStatsTransport</tt> class and
-     * its instances to print debug information.
-     */
-    private static final Logger logger
-        = Logger.getLogger(MucStatsTransport.class);
+public class MucStatsTransport extends StatsTransport {
+	/**
+	 * The <tt>Logger</tt> used by the <tt>MucStatsTransport</tt> class and its
+	 * instances to print debug information.
+	 */
+	private static final Logger logger = Logger.getLogger(MucStatsTransport.class);
 
-    /**
-     * Gets the {@link ClientConnectionImpl} to be used to publish
-     * statistics.
-     * @return the {@link ClientConnectionImpl} or {@code null}.
-     */
-    private ClientConnectionImpl getUserConnectionBundleActivator()
-    {
-        return ServiceUtils.getService(
-            getBundleContext(), ClientConnectionImpl.class);
-    }
+	/**
+	 * Gets the {@link ClientConnectionImpl} to be used to publish statistics.
+	 * 
+	 * @return the {@link ClientConnectionImpl} or {@code null}.
+	 */
+	private ClientConnectionImpl getUserConnectionBundleActivator() {
+		return ServiceUtils.getService(getBundleContext(), ClientConnectionImpl.class);
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void publishStatistics(Statistics stats)
-    {
-        ClientConnectionImpl clientConnectionImpl
-            = getUserConnectionBundleActivator();
-        if (clientConnectionImpl != null)
-        {
-            if (logger.isDebugEnabled())
-            {
-                logger.debug("Publishing statistics through MUC: " + stats);
-            }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void publishStatistics(Statistics stats) {
+		ClientConnectionImpl clientConnectionImpl = getUserConnectionBundleActivator();
+		if (clientConnectionImpl != null) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Publishing statistics through MUC: " + stats);
+			}
 
-            clientConnectionImpl
-                .setPresenceExtension(Statistics.toXmppExtensionElement(stats));
-        }
-        else
-        {
-            logger.warn(
-                "Can not publish via presence, no ClientConnectionImpl.");
-        }
-    }
+			clientConnectionImpl.setPresenceExtension(Statistics.toXmppExtensionElement(stats));
+		} else {
+			logger.warn("Can not publish via presence, no ClientConnectionImpl.");
+		}
+	}
 }
-

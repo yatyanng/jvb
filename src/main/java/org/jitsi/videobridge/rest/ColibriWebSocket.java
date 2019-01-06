@@ -15,80 +15,74 @@
  */
 package org.jitsi.videobridge.rest;
 
-import org.eclipse.jetty.websocket.api.*;
-import org.jitsi.util.*;
-import org.jitsi.videobridge.*;
+import java.util.Objects;
 
-import java.util.*;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WebSocketAdapter;
+import org.jitsi.util.Logger;
+import org.jitsi.videobridge.Endpoint;
 
 /**
  * @author Boris Grozev
  */
-public class ColibriWebSocket extends WebSocketAdapter
-{
-    /**
-     * The logger instance used by this {@link ColibriWebSocket}.
-     */
-    private static final Logger logger
-        = Logger.getLogger(ColibriWebSocket.class);
+public class ColibriWebSocket extends WebSocketAdapter {
+	/**
+	 * The logger instance used by this {@link ColibriWebSocket}.
+	 */
+	private static final Logger logger = Logger.getLogger(ColibriWebSocket.class);
 
-    /**
-     * The {@link ColibriWebSocketServlet} which created this web socket.
-     */
-    private ColibriWebSocketServlet servlet;
+	/**
+	 * The {@link ColibriWebSocketServlet} which created this web socket.
+	 */
+	private ColibriWebSocketServlet servlet;
 
-    /**
-     * The {@link Endpoint}, if any, associated with this web socket.
-     */
-    private final Endpoint endpoint;
+	/**
+	 * The {@link Endpoint}, if any, associated with this web socket.
+	 */
+	private final Endpoint endpoint;
 
-    /**
-     * Initializes a new {@link ColibriWebSocket} instance.
-     * @param servlet the {@link ColibriWebSocketServlet} which created the
-     * instance.
-     */
-    ColibriWebSocket(ColibriWebSocketServlet servlet, Endpoint endpoint)
-    {
-        this.servlet = servlet;
-        this.endpoint = Objects.requireNonNull(endpoint, "endpoint");
-    }
+	/**
+	 * Initializes a new {@link ColibriWebSocket} instance.
+	 * 
+	 * @param servlet the {@link ColibriWebSocketServlet} which created the
+	 *                instance.
+	 */
+	ColibriWebSocket(ColibriWebSocketServlet servlet, Endpoint endpoint) {
+		this.servlet = servlet;
+		this.endpoint = Objects.requireNonNull(endpoint, "endpoint");
+	}
 
-    /**
-     * Handles an a text message received on this web socket.
-     * @param message the message.
-     */
-    @Override
-    public void onWebSocketText(String message)
-    {
-        if (logger.isDebugEnabled())
-        {
-            logger.debug("Received text from " + endpoint.getID() + ": "
-                             + message);
-        }
-        endpoint.onWebSocketText(this, message);
-    }
+	/**
+	 * Handles an a text message received on this web socket.
+	 * 
+	 * @param message the message.
+	 */
+	@Override
+	public void onWebSocketText(String message) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Received text from " + endpoint.getID() + ": " + message);
+		}
+		endpoint.onWebSocketText(this, message);
+	}
 
-    /**
-     * {@inheritDoc}
-     * </p>
-     * Handles the event of this web socket being connected. Finds the
-     * destination COLIBRI {@link Endpoint} and authenticates the request
-     * based on the password.
-     */
-    @Override
-    public void onWebSocketConnect(Session sess)
-    {
-        super.onWebSocketConnect(sess);
+	/**
+	 * {@inheritDoc}
+	 * </p>
+	 * Handles the event of this web socket being connected. Finds the destination
+	 * COLIBRI {@link Endpoint} and authenticates the request based on the password.
+	 */
+	@Override
+	public void onWebSocketConnect(Session sess) {
+		super.onWebSocketConnect(sess);
 
-        endpoint.onWebSocketConnect(this);
-    }
+		endpoint.onWebSocketConnect(this);
+	}
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void onWebSocketClose(int statusCode, String reason)
-    {
-        endpoint.onWebSocketClose(this, statusCode, reason);
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void onWebSocketClose(int statusCode, String reason) {
+		endpoint.onWebSocketClose(this, statusCode, reason);
+	}
 }

@@ -15,123 +15,104 @@
  */
 package org.jitsi.videobridge.octo;
 
-import net.java.sip.communicator.util.*;
-import org.jitsi.service.configuration.*;
-import org.osgi.framework.*;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
-import java.net.*;
+import org.jitsi.service.configuration.ConfigurationService;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+
+import net.java.sip.communicator.util.Logger;
+import net.java.sip.communicator.util.NetworkUtils;
+import net.java.sip.communicator.util.ServiceUtils;
 
 /**
  * A {@link BundleActivator} for a bridge-to-bridge (Octo) relay.
  *
  * @author Boris Grozev
  */
-public class OctoRelayService
-    implements BundleActivator
-{
-    /**
-     * The {@link Logger} used by the {@link OctoRelay} class and its
-     * instances to print debug information.
-     */
-    private static final Logger logger
-        = Logger.getLogger(OctoRelay.class);
+public class OctoRelayService implements BundleActivator {
+	/**
+	 * The {@link Logger} used by the {@link OctoRelay} class and its instances to
+	 * print debug information.
+	 */
+	private static final Logger logger = Logger.getLogger(OctoRelay.class);
 
-    /**
-     * The name of the configuration property which controls the address on
-     * which the Octo relay should bind.
-     */
-    public static final String ADDRESS_PNAME
-        = "org.jitsi.videobridge.octo.BIND_ADDRESS";
-        
-    /**
-     * The name of the configuration property which controls the public address which 
-     * will be used as part of relayId.
-     */
-    public static final String PUBLIC_ADDRESS_PNAME
-        = "org.jitsi.videobridge.octo.PUBLIC_ADDRESS";
+	/**
+	 * The name of the configuration property which controls the address on which
+	 * the Octo relay should bind.
+	 */
+	public static final String ADDRESS_PNAME = "org.jitsi.videobridge.octo.BIND_ADDRESS";
 
-    /**
-     * The name of the property which controls the port number which the Octo
-     * relay should use.
-     */
-    public static final String PORT_PNAME
-        = "org.jitsi.videobridge.octo.BIND_PORT";
+	/**
+	 * The name of the configuration property which controls the public address
+	 * which will be used as part of relayId.
+	 */
+	public static final String PUBLIC_ADDRESS_PNAME = "org.jitsi.videobridge.octo.PUBLIC_ADDRESS";
 
-    /**
-     * The Octo relay instance used by this {@link OctoRelayService}.
-     */
-    private OctoRelay relay;
+	/**
+	 * The name of the property which controls the port number which the Octo relay
+	 * should use.
+	 */
+	public static final String PORT_PNAME = "org.jitsi.videobridge.octo.BIND_PORT";
 
-    /**
-     * The {@code ConfigurationService} which looks up values of configuration
-     * properties.
-     */
-    private ConfigurationService cfg;
+	/**
+	 * The Octo relay instance used by this {@link OctoRelayService}.
+	 */
+	private OctoRelay relay;
 
-    /**
-     * @return the {@link OctoRelay} managed by this
-     * {@link OctoRelayService}.
-     */
-    public OctoRelay getRelay()
-    {
-        return relay;
-    }
+	/**
+	 * The {@code ConfigurationService} which looks up values of configuration
+	 * properties.
+	 */
+	private ConfigurationService cfg;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void start(BundleContext bundleContext)
-    {
-        cfg
-            = ServiceUtils.getService(
-                    bundleContext, ConfigurationService.class);
+	/**
+	 * @return the {@link OctoRelay} managed by this {@link OctoRelayService}.
+	 */
+	public OctoRelay getRelay() {
+		return relay;
+	}
 
-        String address = cfg.getString(ADDRESS_PNAME, null);
-        String publicAddress = cfg.getString(PUBLIC_ADDRESS_PNAME, address);
-        int port = cfg.getInt(PORT_PNAME, -1);
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void start(BundleContext bundleContext) {
+		cfg = ServiceUtils.getService(bundleContext, ConfigurationService.class);
 
-        if (address != null && NetworkUtils.isValidPortNumber(port))
-        {
-            try
-            {
-                relay = new OctoRelay(address, port);
-                relay.setPublicAddress(publicAddress);
-                bundleContext
-                    .registerService(OctoRelayService.class.getName(), this,
-                                     null);
-                logger.info("Initialized an Octo relay with address "
-                                + address + ":" + port);
-            }
-            catch (UnknownHostException | SocketException e)
-            {
-                logger.error("Failed to initialize Octo relay with address "
-                                 + address + ":" + port + ". ", e);
-            }
-        }
-        else
-        {
-            logger.info("Octo relay not configured.");
-        }
-    }
+		String address = cfg.getString(ADDRESS_PNAME, null);
+		String publicAddress = cfg.getString(PUBLIC_ADDRESS_PNAME, address);
+		int port = cfg.getInt(PORT_PNAME, -1);
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void stop(BundleContext bundleContext) throws Exception
-    {
-        if (relay != null)
-        {
-            relay.stop();
-        }
-    }
+		if (address != null && NetworkUtils.isValidPortNumber(port)) {
+			try {
+				relay = new OctoRelay(address, port);
+				relay.setPublicAddress(publicAddress);
+				bundleContext.registerService(OctoRelayService.class.getName(), this, null);
+				logger.info("Initialized an Octo relay with address " + address + ":" + port);
+			} catch (UnknownHostException | SocketException e) {
+				logger.error("Failed to initialize Octo relay with address " + address + ":" + port + ". ", e);
+			}
+		} else {
+			logger.info("Octo relay not configured.");
+		}
+	}
 
-    /**
-     * @return the ID of the Octo relay managed by this {@link OctoRelayService}.
-     */
-    public String getRelayId()
-    {
-        return relay.getId();
-    }
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void stop(BundleContext bundleContext) throws Exception {
+		if (relay != null) {
+			relay.stop();
+		}
+	}
+
+	/**
+	 * @return the ID of the Octo relay managed by this {@link OctoRelayService}.
+	 */
+	public String getRelayId() {
+		return relay.getId();
+	}
 }

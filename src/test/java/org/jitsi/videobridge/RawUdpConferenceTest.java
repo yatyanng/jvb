@@ -15,16 +15,23 @@
  */
 package org.jitsi.videobridge;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
-import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.*;
-import org.jivesoftware.smack.packet.*;
-import org.junit.*;
-import org.junit.runner.*;
-import org.junit.runners.*;
-import org.jxmpp.jid.*;
-import org.jxmpp.jid.impl.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
-import static org.junit.Assert.*;
+import org.jivesoftware.smack.packet.IQ;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.jxmpp.jid.Jid;
+import org.jxmpp.jid.impl.JidCreate;
+
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.ColibriConferenceIQ;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.RTPLevelRelayType;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.CandidatePacketExtension;
+import net.java.sip.communicator.impl.protocol.jabber.extensions.jingle.RawUdpTransportPacketExtension;
 
 /**
  * Tests videobridge on conferences with raw UDP channels.
@@ -32,91 +39,74 @@ import static org.junit.Assert.*;
  * @author Johannes Singler
  */
 @RunWith(JUnit4.class)
-public class RawUdpConferenceTest
-{
-    /**
-     * Tested <tt>Videobridge</tt> instance.
-     */
-    private static Videobridge bridge;
+public class RawUdpConferenceTest {
+	/**
+	 * Tested <tt>Videobridge</tt> instance.
+	 */
+	private static Videobridge bridge;
 
-    private static OSGiHandler osgiHandler = new OSGiHandler();
+	private static OSGiHandler osgiHandler = new OSGiHandler();
 
-    /**
-     * Initializes OSGi and the videobridge.
-     */
-    @BeforeClass
-    public static void setUp()
-        throws InterruptedException
-    {
-        osgiHandler.start();
+	/**
+	 * Initializes OSGi and the videobridge.
+	 */
+	@BeforeClass
+	public static void setUp() throws InterruptedException {
+		osgiHandler.start();
 
-        bridge = osgiHandler.getService(Videobridge.class);
-    }
+		bridge = osgiHandler.getService(Videobridge.class);
+	}
 
-    /**
-     * Shutdown OSGi and the videobridge.
-     */
-    @AfterClass
-    public static void tearDown()
-        throws InterruptedException
-    {
-        osgiHandler.stop();
-    }
+	/**
+	 * Shutdown OSGi and the videobridge.
+	 */
+	@AfterClass
+	public static void tearDown() throws InterruptedException {
+		osgiHandler.stop();
+	}
 
-    /**
-     * Tests when requesting a raw UDP channel, we do not get candidates with
-     * 127.0.0.1 IPs.
-     *
-     * Test fails only if the machine has only a loopback interface, which is
-     * very unlikely.
-     */
-    @Test
-    public void testNo_127_0_0_0_CandidateIps()
-        throws Exception
-    {
-        Jid focusJid = JidCreate.from("focusJid");
+	/**
+	 * Tests when requesting a raw UDP channel, we do not get candidates with
+	 * 127.0.0.1 IPs.
+	 *
+	 * Test fails only if the machine has only a loopback interface, which is very
+	 * unlikely.
+	 */
+	@Test
+	public void testNo_127_0_0_0_CandidateIps() throws Exception {
+		Jid focusJid = JidCreate.from("focusJid");
 
-        ColibriConferenceIQ confIq
-            = ColibriUtilities.createConferenceIq(focusJid);
-        confIq.getContents().get(0).getChannel(0).
-                setTransport(new RawUdpTransportPacketExtension());
+		ColibriConferenceIQ confIq = ColibriUtilities.createConferenceIq(focusJid);
+		confIq.getContents().get(0).getChannel(0).setTransport(new RawUdpTransportPacketExtension());
 
-        IQ respIq = bridge.handleColibriConferenceIQ(confIq);
+		IQ respIq = bridge.handleColibriConferenceIQ(confIq);
 
-        assertTrue(respIq instanceof ColibriConferenceIQ);
-        ColibriConferenceIQ respConfIq = (ColibriConferenceIQ) respIq;
+		assertTrue(respIq instanceof ColibriConferenceIQ);
+		ColibriConferenceIQ respConfIq = (ColibriConferenceIQ) respIq;
 
-        for (CandidatePacketExtension candidate :
-                respConfIq.getContents().get(0).getChannel(0).
-                        getTransport().getCandidateList())
-        {
-            assertNotEquals("127.0.0.1", candidate.getAttribute("ip"));
-        }
-    }
+		for (CandidatePacketExtension candidate : respConfIq.getContents().get(0).getChannel(0).getTransport()
+				.getCandidateList()) {
+			assertNotEquals("127.0.0.1", candidate.getAttribute("ip"));
+		}
+	}
 
-    /**
-     * Tests requesting a raw UDP channel with RTP level relay type MIXER
-     */
-    @Test
-    public void testMixerChannel()
-            throws Exception
-    {
-        Jid focusJid = JidCreate.from("focusJid");
+	/**
+	 * Tests requesting a raw UDP channel with RTP level relay type MIXER
+	 */
+	@Test
+	public void testMixerChannel() throws Exception {
+		Jid focusJid = JidCreate.from("focusJid");
 
-        ColibriConferenceIQ confIq
-                = ColibriUtilities.createConferenceIq(focusJid);
-        ColibriConferenceIQ.Channel channel
-                = confIq.getContents().get(0).getChannel(0);
-        channel.setTransport(new RawUdpTransportPacketExtension());
-        channel.setRTPLevelRelayType(RTPLevelRelayType.MIXER);
+		ColibriConferenceIQ confIq = ColibriUtilities.createConferenceIq(focusJid);
+		ColibriConferenceIQ.Channel channel = confIq.getContents().get(0).getChannel(0);
+		channel.setTransport(new RawUdpTransportPacketExtension());
+		channel.setRTPLevelRelayType(RTPLevelRelayType.MIXER);
 
-        IQ respIq = bridge.handleColibriConferenceIQ(confIq);
+		IQ respIq = bridge.handleColibriConferenceIQ(confIq);
 
-        assertTrue(respIq instanceof ColibriConferenceIQ);
-        ColibriConferenceIQ respConfIq = (ColibriConferenceIQ) respIq;
+		assertTrue(respIq instanceof ColibriConferenceIQ);
+		ColibriConferenceIQ respConfIq = (ColibriConferenceIQ) respIq;
 
-        assertEquals(RTPLevelRelayType.MIXER,
-                        respConfIq.getContents().get(0).getChannel(0).
-                            getRTPLevelRelayType());
-    }
+		assertEquals(RTPLevelRelayType.MIXER, respConfIq.getContents().get(0).getChannel(0).getRTPLevelRelayType());
+	}
 }

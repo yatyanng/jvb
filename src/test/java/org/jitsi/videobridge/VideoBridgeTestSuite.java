@@ -15,9 +15,9 @@
  */
 package org.jitsi.videobridge;
 
-import org.jitsi.videobridge.xmpp.*;
-import org.junit.runner.*;
-import org.junit.runners.*;
+import org.jitsi.videobridge.xmpp.MediaStreamTrackFactoryTest;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 /**
  * Test suite for the videobridge.
@@ -25,14 +25,8 @@ import org.junit.runners.*;
  * @author Pawel Domas
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses(
-    {
-        FocusControlTest.class,
-        RawUdpConferenceTest.class,
-        EndpointMessageBuilderTest.class,
-        MediaStreamTrackFactoryTest.class,
-        BridgeShutdownTest.class, // This one must be the last one
-    })
-public class VideoBridgeTestSuite
-{
+@Suite.SuiteClasses({ FocusControlTest.class, RawUdpConferenceTest.class, EndpointMessageBuilderTest.class,
+		MediaStreamTrackFactoryTest.class, BridgeShutdownTest.class, // This one must be the last one
+})
+public class VideoBridgeTestSuite {
 }

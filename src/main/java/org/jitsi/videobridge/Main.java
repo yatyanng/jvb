@@ -15,11 +15,12 @@
  */
 package org.jitsi.videobridge;
 
-import org.jitsi.cmd.*;
-import org.jitsi.meet.*;
-import org.jitsi.service.neomedia.*;
-import org.jitsi.videobridge.osgi.*;
-import org.jitsi.videobridge.xmpp.*;
+import org.jitsi.cmd.CmdLine;
+import org.jitsi.meet.ComponentMain;
+import org.jitsi.service.neomedia.DefaultStreamConnector;
+import org.jitsi.service.neomedia.MediaService;
+import org.jitsi.videobridge.osgi.JvbBundleConfig;
+import org.jitsi.videobridge.xmpp.ComponentImpl;
 
 /**
  * Provides the <tt>main</tt> entry point of the Jitsi Videobridge application
@@ -37,171 +38,146 @@ import org.jitsi.videobridge.xmpp.*;
  *
  * @author Lyubomir Marinov
  */
-public class Main
-{
-    /**
-     * The name of the command-line argument which specifies the application
-     * programming interfaces (APIs) to enable for Jitsi Videobridge.
-     */
-    private static final String APIS_ARG_NAME = "--apis";
+public class Main {
+	/**
+	 * The name of the command-line argument which specifies the application
+	 * programming interfaces (APIs) to enable for Jitsi Videobridge.
+	 */
+	private static final String APIS_ARG_NAME = "--apis";
 
-    /**
-     * The name of the command-line argument which specifies the XMPP domain
-     * to use.
-     */
-    private static final String DOMAIN_ARG_NAME = "--domain";
+	/**
+	 * The name of the command-line argument which specifies the XMPP domain to use.
+	 */
+	private static final String DOMAIN_ARG_NAME = "--domain";
 
-    /**
-     * The name of the command-line argument which specifies the IP address or
-     * the name of the XMPP host to connect to.
-     */
-    private static final String HOST_ARG_NAME = "--host";
+	/**
+	 * The name of the command-line argument which specifies the IP address or the
+	 * name of the XMPP host to connect to.
+	 */
+	private static final String HOST_ARG_NAME = "--host";
 
-    /**
-     * The default value of the {@link #HOST_ARG_NAME} command-line argument if
-     * it is not explicitly provided.
-     */
-    private static final String HOST_ARG_VALUE = "localhost";
+	/**
+	 * The default value of the {@link #HOST_ARG_NAME} command-line argument if it
+	 * is not explicitly provided.
+	 */
+	private static final String HOST_ARG_VALUE = "localhost";
 
-    /**
-     * The name of the command-line argument which specifies the value of the
-     * maximum port to use for dynamic allocation.
-     * @deprecated We should replace this with a property.
-     */
-    private static final String MAX_PORT_ARG_NAME = "--max-port";
+	/**
+	 * The name of the command-line argument which specifies the value of the
+	 * maximum port to use for dynamic allocation.
+	 * 
+	 * @deprecated We should replace this with a property.
+	 */
+	@Deprecated
+	private static final String MAX_PORT_ARG_NAME = "--max-port";
 
-    /**
-     * The default value of the {@link #MAX_PORT_ARG_NAME} command-line argument
-     * if it is not explicitly provided.
-     * @deprecated We should replace this with a property.
-     */
-    private static final int MAX_PORT_ARG_VALUE
-        = TransportManager.DEFAULT_MAX_PORT;
+	/**
+	 * The default value of the {@link #MAX_PORT_ARG_NAME} command-line argument if
+	 * it is not explicitly provided.
+	 * 
+	 * @deprecated We should replace this with a property.
+	 */
+	@Deprecated
+	private static final int MAX_PORT_ARG_VALUE = TransportManager.DEFAULT_MAX_PORT;
 
-    /**
-     * The name of the command-line argument which specifies the value of the
-     * minimum port to use for dynamic allocation.
-     * @deprecated We should replace this with a property.
-     */
-    private static final String MIN_PORT_ARG_NAME = "--min-port";
+	/**
+	 * The name of the command-line argument which specifies the value of the
+	 * minimum port to use for dynamic allocation.
+	 * 
+	 * @deprecated We should replace this with a property.
+	 */
+	@Deprecated
+	private static final String MIN_PORT_ARG_NAME = "--min-port";
 
-    /**
-     * The default value of the {@link #MIN_PORT_ARG_NAME} command-line argument
-     * if it is not explicitly provided.
-     * @deprecated We should replace this with a property.
-     */
-    private static final int MIN_PORT_ARG_VALUE
-        = TransportManager.DEFAULT_MIN_PORT;
+	/**
+	 * The default value of the {@link #MIN_PORT_ARG_NAME} command-line argument if
+	 * it is not explicitly provided.
+	 * 
+	 * @deprecated We should replace this with a property.
+	 */
+	@Deprecated
+	private static final int MIN_PORT_ARG_VALUE = TransportManager.DEFAULT_MIN_PORT;
 
-    /**
-     * The name of the command-line argument which specifies the port of the
-     * XMPP host to connect on.
-     */
-    private static final String PORT_ARG_NAME = "--port";
+	/**
+	 * The name of the command-line argument which specifies the port of the XMPP
+	 * host to connect on.
+	 */
+	private static final String PORT_ARG_NAME = "--port";
 
-    /**
-     * The default value of the {@link #PORT_ARG_NAME} command-line argument if
-     * it is not explicitly provided.
-     */
-    private static final int PORT_ARG_VALUE = 5275;
+	/**
+	 * The default value of the {@link #PORT_ARG_NAME} command-line argument if it
+	 * is not explicitly provided.
+	 */
+	private static final int PORT_ARG_VALUE = 5275;
 
-    /**
-     * The name of the command-line argument which specifies the secret key for
-     * the sub-domain of the Jabber component implemented by this application
-     * with which it is to authenticate to the XMPP server to connect to.
-     */
-    private static final String SECRET_ARG_NAME = "--secret";
+	/**
+	 * The name of the command-line argument which specifies the secret key for the
+	 * sub-domain of the Jabber component implemented by this application with which
+	 * it is to authenticate to the XMPP server to connect to.
+	 */
+	private static final String SECRET_ARG_NAME = "--secret";
 
-    /**
-     * The name of the command-line argument which specifies sub-domain name for
-     * the videobridge component.
-     */
-    private static final String SUBDOMAIN_ARG_NAME = "--subdomain";
+	/**
+	 * The name of the command-line argument which specifies sub-domain name for the
+	 * videobridge component.
+	 */
+	private static final String SUBDOMAIN_ARG_NAME = "--subdomain";
 
-    /**
-     * Represents the <tt>main</tt> entry point of the Jitsi Videobridge
-     * application which implements an external Jabber component.
-     *
-     * @param args the arguments provided to the application on the command line
-     * @throws Exception if anything goes wrong and the condition cannot be
-     * gracefully handled during the execution of the application
-     */
-    public static void main(String[] args)
-        throws Exception
-    {
-        CmdLine cmdLine = new CmdLine();
+	/**
+	 * Represents the <tt>main</tt> entry point of the Jitsi Videobridge application
+	 * which implements an external Jabber component.
+	 *
+	 * @param args the arguments provided to the application on the command line
+	 * @throws Exception if anything goes wrong and the condition cannot be
+	 *                   gracefully handled during the execution of the application
+	 */
+	public static void main(String[] args) throws Exception {
+		CmdLine cmdLine = new CmdLine();
 
-        cmdLine.parse(args);
+		cmdLine.parse(args);
 
-        // Parse the command-line arguments.
-        String apis
-            = cmdLine.getOptionValue(APIS_ARG_NAME, Videobridge.XMPP_API);
-        String domain = cmdLine.getOptionValue(DOMAIN_ARG_NAME, null);
-        int maxPort
-            = cmdLine.getIntOptionValue(MAX_PORT_ARG_NAME, MAX_PORT_ARG_VALUE);
-        int minPort
-            = cmdLine.getIntOptionValue(MIN_PORT_ARG_NAME, MIN_PORT_ARG_VALUE);
-        int port = cmdLine.getIntOptionValue(PORT_ARG_NAME, PORT_ARG_VALUE);
-        String secret = cmdLine.getOptionValue(SECRET_ARG_NAME, "");
-        String subdomain
-            = cmdLine.getOptionValue(
-                    SUBDOMAIN_ARG_NAME, ComponentImpl.SUBDOMAIN);
+		// Parse the command-line arguments.
+		String apis = cmdLine.getOptionValue(APIS_ARG_NAME, Videobridge.XMPP_API);
+		String domain = cmdLine.getOptionValue(DOMAIN_ARG_NAME, null);
+		int maxPort = cmdLine.getIntOptionValue(MAX_PORT_ARG_NAME, MAX_PORT_ARG_VALUE);
+		int minPort = cmdLine.getIntOptionValue(MIN_PORT_ARG_NAME, MIN_PORT_ARG_VALUE);
+		int port = cmdLine.getIntOptionValue(PORT_ARG_NAME, PORT_ARG_VALUE);
+		String secret = cmdLine.getOptionValue(SECRET_ARG_NAME, "");
+		String subdomain = cmdLine.getOptionValue(SUBDOMAIN_ARG_NAME, ComponentImpl.SUBDOMAIN);
 
-        String host
-            = cmdLine.getOptionValue(
-                    HOST_ARG_NAME,
-                    domain == null ? HOST_ARG_VALUE : domain);
+		String host = cmdLine.getOptionValue(HOST_ARG_NAME, domain == null ? HOST_ARG_VALUE : domain);
 
-        // Before initializing the application programming interfaces (APIs) of
-        // Jitsi Videobridge, set any System properties which they use and which
-        // may be specified by the command-line arguments.
-        System.setProperty(
-                Videobridge.REST_API_PNAME,
-                Boolean.toString(apis.contains(Videobridge.REST_API)));
-        System.setProperty(
-                Videobridge.XMPP_API_PNAME,
-                Boolean.toString(apis.contains(Videobridge.XMPP_API)));
+		// Before initializing the application programming interfaces (APIs) of
+		// Jitsi Videobridge, set any System properties which they use and which
+		// may be specified by the command-line arguments.
+		System.setProperty(Videobridge.REST_API_PNAME, Boolean.toString(apis.contains(Videobridge.REST_API)));
+		System.setProperty(Videobridge.XMPP_API_PNAME, Boolean.toString(apis.contains(Videobridge.XMPP_API)));
 
-        // Max and min port properties
-        String maxPort_ = String.valueOf(maxPort);
-        String minPort_ = String.valueOf(minPort);
+		// Max and min port properties
+		String maxPort_ = String.valueOf(maxPort);
+		String minPort_ = String.valueOf(minPort);
 
-        // Jingle Raw UDP transport
-        // TODO: Use the common TransportManager.portTracker for Raw UDP too
-        System.setProperty(
-                DefaultStreamConnector.MAX_PORT_NUMBER_PROPERTY_NAME,
-                maxPort_);
-        System.setProperty(
-                DefaultStreamConnector.MIN_PORT_NUMBER_PROPERTY_NAME,
-                minPort_);
+		// Jingle Raw UDP transport
+		// TODO: Use the common TransportManager.portTracker for Raw UDP too
+		System.setProperty(DefaultStreamConnector.MAX_PORT_NUMBER_PROPERTY_NAME, maxPort_);
+		System.setProperty(DefaultStreamConnector.MIN_PORT_NUMBER_PROPERTY_NAME, minPort_);
 
-        // enable h264 format registering in libjitsi
-        System.setProperty(
-                MediaService.ENABLE_H264_FORMAT_PNAME,
-                "true");
+		// enable h264 format registering in libjitsi
+		System.setProperty(MediaService.ENABLE_H264_FORMAT_PNAME, "true");
 
-        // Jingle ICE-UDP transport
-        TransportManager.portTracker.tryRange(minPort_, maxPort_);
+		// Jingle ICE-UDP transport
+		TransportManager.portTracker.tryRange(minPort_, maxPort_);
 
-        ComponentMain main = new ComponentMain();
-        JvbBundleConfig osgiBundles = new JvbBundleConfig();
+		ComponentMain main = new ComponentMain();
+		JvbBundleConfig osgiBundles = new JvbBundleConfig();
 
-        // Start Jitsi Videobridge as an external Jabber component.
-        if (apis.contains(Videobridge.XMPP_API))
-        {
-            ComponentImpl component
-                = new ComponentImpl(
-                        host,
-                        port,
-                        domain,
-                        subdomain,
-                        secret);
+		// Start Jitsi Videobridge as an external Jabber component.
+		if (apis.contains(Videobridge.XMPP_API)) {
+			ComponentImpl component = new ComponentImpl(host, port, domain, subdomain, secret);
 
-            main.runMainProgramLoop(component, osgiBundles);
-        }
-        else
-        {
-            main.runMainProgramLoop(osgiBundles);
-        }
-    }
+			main.runMainProgramLoop(component, osgiBundles);
+		} else {
+			main.runMainProgramLoop(osgiBundles);
+		}
+	}
 }

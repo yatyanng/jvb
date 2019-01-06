@@ -15,13 +15,22 @@
  */
 package org.jitsi.videobridge.eventadmin.callstats;
 
-import org.jitsi.service.neomedia.*;
-import org.jitsi.service.neomedia.stats.*;
-import org.jitsi.stats.media.*;
-import org.jitsi.util.*;
-import org.jitsi.videobridge.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.*;
+import org.jitsi.service.neomedia.MediaStream;
+import org.jitsi.service.neomedia.MediaType;
+import org.jitsi.service.neomedia.stats.MediaStreamStats2;
+import org.jitsi.service.neomedia.stats.ReceiveTrackStats;
+import org.jitsi.service.neomedia.stats.SendTrackStats;
+import org.jitsi.stats.media.AbstractStatsPeriodicRunnable;
+import org.jitsi.stats.media.StatsService;
+import org.jitsi.util.Logger;
+import org.jitsi.videobridge.AbstractEndpoint;
+import org.jitsi.videobridge.Conference;
+import org.jitsi.videobridge.RtpChannel;
 
 /**
  * Extends a {@link AbstractStatsPeriodicRunnable} which periodically generates
@@ -29,127 +38,92 @@ import java.util.*;
  *
  * @author Damian Minkov
  */
-public class ConferencePeriodicRunnable
-    extends AbstractStatsPeriodicRunnable<Conference>
-{
-    /**
-     * The <tt>Logger</tt> used by the <tt>ConferencePeriodicRunnable</tt>
-     * class and its instances to print debug information.
-     */
-    private static final Logger logger
-        = Logger.getLogger(ConferencePeriodicRunnable.class);
+public class ConferencePeriodicRunnable extends AbstractStatsPeriodicRunnable<Conference> {
+	/**
+	 * The <tt>Logger</tt> used by the <tt>ConferencePeriodicRunnable</tt> class and
+	 * its instances to print debug information.
+	 */
+	private static final Logger logger = Logger.getLogger(ConferencePeriodicRunnable.class);
 
-    /**
-     * The {@link MediaType}s for which we will report to callstats.
-     */
-    private static final MediaType[] MEDIA_TYPES
-        = { MediaType.AUDIO, MediaType.VIDEO };
+	/**
+	 * The {@link MediaType}s for which we will report to callstats.
+	 */
+	private static final MediaType[] MEDIA_TYPES = { MediaType.AUDIO, MediaType.VIDEO };
 
-    /**
-     * Constructs <tt>ConferencePeriodicRunnable</tt>.
-     * @param conference the conference.
-     * @param period the reporting interval.
-     * @param statsService the StatsService to use for reporting.
-     * @param conferenceIDPrefix prefix to use when creating conference IDs.
-     * @param initiatorID the id which identifies the current bridge.
-     */
-    ConferencePeriodicRunnable(
-        Conference conference,
-        long period,
-        StatsService statsService,
-        String conferenceIDPrefix,
-        String initiatorID)
-    {
-        super(conference,
-            period,
-            statsService,
-            conference.getName() == null
-                  ? "null" : conference.getName().toString(),
-            conferenceIDPrefix,
-            initiatorID);
-    }
+	/**
+	 * Constructs <tt>ConferencePeriodicRunnable</tt>.
+	 * 
+	 * @param conference         the conference.
+	 * @param period             the reporting interval.
+	 * @param statsService       the StatsService to use for reporting.
+	 * @param conferenceIDPrefix prefix to use when creating conference IDs.
+	 * @param initiatorID        the id which identifies the current bridge.
+	 */
+	ConferencePeriodicRunnable(Conference conference, long period, StatsService statsService, String conferenceIDPrefix,
+			String initiatorID) {
+		super(conference, period, statsService, conference.getName() == null ? "null" : conference.getName().toString(),
+				conferenceIDPrefix, initiatorID);
+	}
 
-    @Override
-    protected Map<String, Collection<? extends ReceiveTrackStats>>
-        getReceiveTrackStats()
-    {
-        return getTrackStats(true);
-    }
+	@Override
+	protected Map<String, Collection<? extends ReceiveTrackStats>> getReceiveTrackStats() {
+		return getTrackStats(true);
+	}
 
-    @Override
-    protected Map<String, Collection<? extends SendTrackStats>>
-        getSendTrackStats()
-    {
-        return getTrackStats(false);
-    }
+	@Override
+	protected Map<String, Collection<? extends SendTrackStats>> getSendTrackStats() {
+		return getTrackStats(false);
+	}
 
-    /**
-     * Get stats receive or send from current conference.
-     *
-     * @param receive whether to get receive if <tt>true</tt> or
-     * send statistics otherwise.
-     * @param <T> the type of result stats Collection, ReceiveTrackStats
-     * or SendTrackStats.
-     * @return the result collection of stats grouped by endpointID.
-     */
-    private <T extends Collection> Map<String, T> getTrackStats(boolean receive)
-    {
-        Map<String, T> resultStats = new HashMap<>();
+	/**
+	 * Get stats receive or send from current conference.
+	 *
+	 * @param receive whether to get receive if <tt>true</tt> or send statistics
+	 *                otherwise.
+	 * @param         <T> the type of result stats Collection, ReceiveTrackStats or
+	 *                SendTrackStats.
+	 * @return the result collection of stats grouped by endpointID.
+	 */
+	private <T extends Collection> Map<String, T> getTrackStats(boolean receive) {
+		Map<String, T> resultStats = new HashMap<>();
 
-        for (AbstractEndpoint endpoint : o.getEndpoints())
-        {
-            for (MediaType mediaType : MEDIA_TYPES)
-            {
-                for (RtpChannel channel : endpoint.getChannels(mediaType))
-                {
-                    if (channel == null)
-                    {
-                        logger.debug("Could not log the channel expired event "
-                            + "because the channel is null.");
-                        continue;
-                    }
+		for (AbstractEndpoint endpoint : o.getEndpoints()) {
+			for (MediaType mediaType : MEDIA_TYPES) {
+				for (RtpChannel channel : endpoint.getChannels(mediaType)) {
+					if (channel == null) {
+						logger.debug("Could not log the channel expired event " + "because the channel is null.");
+						continue;
+					}
 
-                    if (channel.getReceiveSSRCs().length == 0)
-                    {
-                        continue;
-                    }
+					if (channel.getReceiveSSRCs().length == 0) {
+						continue;
+					}
 
-                    MediaStream stream = channel.getStream();
-                    if (stream == null)
-                    {
-                        continue;
-                    }
+					MediaStream stream = channel.getStream();
+					if (stream == null) {
+						continue;
+					}
 
-                    MediaStreamStats2 stats = stream.getMediaStreamStats();
-                    if (stats == null)
-                    {
-                        continue;
-                    }
+					MediaStreamStats2 stats = stream.getMediaStreamStats();
+					if (stats == null) {
+						continue;
+					}
 
-                    // uses statsId if it is available
-                    String endpointID
-                        = endpoint.getStatsId()
-                            != null ? endpoint.getStatsId(): endpoint.getID();
+					// uses statsId if it is available
+					String endpointID = endpoint.getStatsId() != null ? endpoint.getStatsId() : endpoint.getID();
 
-                    Collection newStats
-                        = receive
-                            ? stats.getAllReceiveStats()
-                            : stats.getAllSendStats();
+					Collection newStats = receive ? stats.getAllReceiveStats() : stats.getAllSendStats();
 
-                    T previousResults = resultStats.get(endpointID);
-                    if (previousResults != null)
-                    {
-                        previousResults.addAll(newStats);
-                    }
-                    else
-                    {
-                        resultStats.put(
-                            endpointID, (T)new ArrayList<>(newStats));
-                    }
-                }
-            }
-        }
+					T previousResults = resultStats.get(endpointID);
+					if (previousResults != null) {
+						previousResults.addAll(newStats);
+					} else {
+						resultStats.put(endpointID, (T) new ArrayList<>(newStats));
+					}
+				}
+			}
+		}
 
-        return resultStats;
-    }
+		return resultStats;
+	}
 }

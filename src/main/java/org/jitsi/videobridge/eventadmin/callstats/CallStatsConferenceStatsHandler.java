@@ -15,14 +15,17 @@
  */
 package org.jitsi.videobridge.eventadmin.callstats;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import org.jitsi.eventadmin.*;
-import org.jitsi.stats.media.*;
-import org.jitsi.util.*;
-import org.jitsi.util.concurrent.*;
-import org.jitsi.videobridge.*;
+import org.jitsi.eventadmin.AbstractEventFactory;
+import org.jitsi.eventadmin.Event;
+import org.jitsi.eventadmin.EventHandler;
+import org.jitsi.stats.media.StatsService;
+import org.jitsi.util.Logger;
+import org.jitsi.util.concurrent.RecurringRunnableExecutor;
+import org.jitsi.videobridge.Conference;
+import org.jitsi.videobridge.EventFactory;
 
 /**
  * Handles events of the bridge for creating a conference/channel or expiring it
@@ -30,163 +33,133 @@ import org.jitsi.videobridge.*;
  *
  * @author Damian Minkov
  */
-class CallStatsConferenceStatsHandler
-    implements EventHandler
-{
-    /**
-     * The <tt>Logger</tt> used by the <tt>CallStatsConferenceStatsHandler</tt>
-     * class and its instances to print debug information.
-     */
-    private static final Logger logger
-        = Logger.getLogger(CallStatsConferenceStatsHandler.class);
+class CallStatsConferenceStatsHandler implements EventHandler {
+	/**
+	 * The <tt>Logger</tt> used by the <tt>CallStatsConferenceStatsHandler</tt>
+	 * class and its instances to print debug information.
+	 */
+	private static final Logger logger = Logger.getLogger(CallStatsConferenceStatsHandler.class);
 
-    /**
-     * The {@link RecurringRunnableExecutor} which periodically invokes
-     * generating and pushing statistics per conference for every Channel.
-     */
-    private static final RecurringRunnableExecutor statisticsExecutor
-        = new RecurringRunnableExecutor(
-        CallStatsConferenceStatsHandler.class.getSimpleName()
-            + "-statisticsExecutor");
+	/**
+	 * The {@link RecurringRunnableExecutor} which periodically invokes generating
+	 * and pushing statistics per conference for every Channel.
+	 */
+	private static final RecurringRunnableExecutor statisticsExecutor = new RecurringRunnableExecutor(
+			CallStatsConferenceStatsHandler.class.getSimpleName() + "-statisticsExecutor");
 
-    /**
-     * The entry point into the jitsi-stats library.
-     */
-    private StatsService statsService;
+	/**
+	 * The entry point into the jitsi-stats library.
+	 */
+	private StatsService statsService;
 
-    /**
-     * The id which identifies the current bridge.
-     */
-    private String bridgeId;
+	/**
+	 * The id which identifies the current bridge.
+	 */
+	private String bridgeId;
 
-    /**
-     * The prefix to use when creating conference ID to report.
-     */
-    private String conferenceIDPrefix;
+	/**
+	 * The prefix to use when creating conference ID to report.
+	 */
+	private String conferenceIDPrefix;
 
-    /**
-     * List of the processor per conference. Kept in order to stop and
-     * deRegister them from the executor.
-     */
-    private final Map<Conference,ConferencePeriodicRunnable>
-        statisticsProcessors
-            = new ConcurrentHashMap<>();
+	/**
+	 * List of the processor per conference. Kept in order to stop and deRegister
+	 * them from the executor.
+	 */
+	private final Map<Conference, ConferencePeriodicRunnable> statisticsProcessors = new ConcurrentHashMap<>();
 
-    /**
-     * The interval to poll for stats and to push them to the callstats service.
-     */
-    private int interval;
+	/**
+	 * The interval to poll for stats and to push them to the callstats service.
+	 */
+	private int interval;
 
-    /**
-     * Starts the handler with initialized callstats library.
-     * @param statsService entry point into the jitsi-statsß library.
-     * @param bridgeId the id which identifies the current bridge.
-     * @param conferenceIDPrefix prefix to use when creating conference IDs.
-     * @param interval interval to poll for stats and
-     * to push them to the callstats service.
-     */
-    void start(StatsService statsService, String bridgeId,
-        String conferenceIDPrefix,
-        int interval)
-    {
-        this.statsService = statsService;
-        this.bridgeId = bridgeId;
-        this.interval = interval;
+	/**
+	 * Starts the handler with initialized callstats library.
+	 * 
+	 * @param statsService       entry point into the jitsi-statsß library.
+	 * @param bridgeId           the id which identifies the current bridge.
+	 * @param conferenceIDPrefix prefix to use when creating conference IDs.
+	 * @param interval           interval to poll for stats and to push them to the
+	 *                           callstats service.
+	 */
+	void start(StatsService statsService, String bridgeId, String conferenceIDPrefix, int interval) {
+		this.statsService = statsService;
+		this.bridgeId = bridgeId;
+		this.interval = interval;
 
-        this.conferenceIDPrefix = conferenceIDPrefix;
-    }
+		this.conferenceIDPrefix = conferenceIDPrefix;
+	}
 
-    /**
-     * Stops and cancels all pending operations. Clears all listeners.
-     */
-    void stop()
-    {
-        // Let's stop all left runnables.
-        for (ConferencePeriodicRunnable cpr : statisticsProcessors.values())
-        {
-            statisticsExecutor.deRegisterRecurringRunnable(cpr);
-        }
-    }
+	/**
+	 * Stops and cancels all pending operations. Clears all listeners.
+	 */
+	void stop() {
+		// Let's stop all left runnables.
+		for (ConferencePeriodicRunnable cpr : statisticsProcessors.values()) {
+			statisticsExecutor.deRegisterRecurringRunnable(cpr);
+		}
+	}
 
-    /**
-     * Handles events.
-     * @param event the event
-     */
-    @Override
-    public void handleEvent(Event event)
-    {
-        if (event == null)
-        {
-            logger.debug("Could not handle an event because it was null.");
-            return;
-        }
+	/**
+	 * Handles events.
+	 * 
+	 * @param event the event
+	 */
+	@Override
+	public void handleEvent(Event event) {
+		if (event == null) {
+			logger.debug("Could not handle an event because it was null.");
+			return;
+		}
 
-        String topic = event.getTopic();
+		String topic = event.getTopic();
 
-        if (EventFactory.CONFERENCE_CREATED_TOPIC.equals(topic))
-        {
-            conferenceCreated(
-                    (Conference) event.getProperty(EventFactory.EVENT_SOURCE));
-        }
-        else if (EventFactory.CONFERENCE_EXPIRED_TOPIC.equals(topic))
-        {
-            conferenceExpired(
-                    (Conference) event.getProperty(EventFactory.EVENT_SOURCE));
-        }
-    }
+		if (EventFactory.CONFERENCE_CREATED_TOPIC.equals(topic)) {
+			conferenceCreated((Conference) event.getProperty(AbstractEventFactory.EVENT_SOURCE));
+		} else if (EventFactory.CONFERENCE_EXPIRED_TOPIC.equals(topic)) {
+			conferenceExpired((Conference) event.getProperty(AbstractEventFactory.EVENT_SOURCE));
+		}
+	}
 
-    /**
-     * Conference created.
-     * @param conference the conference that is created.
-     */
-    private void conferenceCreated(final Conference conference)
-    {
-        if (conference == null)
-        {
-            logger.debug(
-                    "Could not log conference created event because the"
-                        + " conference is null.");
-            return;
-        }
+	/**
+	 * Conference created.
+	 * 
+	 * @param conference the conference that is created.
+	 */
+	private void conferenceCreated(final Conference conference) {
+		if (conference == null) {
+			logger.debug("Could not log conference created event because the" + " conference is null.");
+			return;
+		}
 
-        // Create a new PeriodicRunnable and start it.
-        ConferencePeriodicRunnable cpr
-            = new ConferencePeriodicRunnable(
-                    conference,
-                    interval,
-                    this.statsService,
-                    this.conferenceIDPrefix,
-                    this.bridgeId);
-        cpr.start();
+		// Create a new PeriodicRunnable and start it.
+		ConferencePeriodicRunnable cpr = new ConferencePeriodicRunnable(conference, interval, this.statsService,
+				this.conferenceIDPrefix, this.bridgeId);
+		cpr.start();
 
-        // register for periodic execution.
-        statisticsProcessors.put(conference, cpr);
-        statisticsExecutor.registerRecurringRunnable(cpr);
-    }
+		// register for periodic execution.
+		statisticsProcessors.put(conference, cpr);
+		statisticsExecutor.registerRecurringRunnable(cpr);
+	}
 
-    /**
-     * Conference expired.
-     * @param conference the conference that expired.
-     */
-    private void conferenceExpired(Conference conference)
-    {
-        if (conference == null)
-        {
-            logger.debug(
-                    "Could not log conference expired event because the"
-                        + " conference is null.");
-            return;
-        }
+	/**
+	 * Conference expired.
+	 * 
+	 * @param conference the conference that expired.
+	 */
+	private void conferenceExpired(Conference conference) {
+		if (conference == null) {
+			logger.debug("Could not log conference expired event because the" + " conference is null.");
+			return;
+		}
 
-        ConferencePeriodicRunnable cpr
-            = statisticsProcessors.remove(conference);
+		ConferencePeriodicRunnable cpr = statisticsProcessors.remove(conference);
 
-        if (cpr == null)
-        {
-            return;
-        }
+		if (cpr == null) {
+			return;
+		}
 
-        cpr.stop();
-        statisticsExecutor.deRegisterRecurringRunnable(cpr);
-    }
+		cpr.stop();
+		statisticsExecutor.deRegisterRecurringRunnable(cpr);
+	}
 }

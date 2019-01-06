@@ -15,43 +15,39 @@
  */
 package org.jitsi.videobridge;
 
-import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.*;
-import org.jitsi.service.neomedia.*;
-import org.jxmpp.jid.*;
+import org.jitsi.service.neomedia.MediaType;
+import org.jxmpp.jid.Jid;
+
+import net.java.sip.communicator.impl.protocol.jabber.extensions.colibri.ColibriConferenceIQ;
 
 /**
  * FIXME merge with utility used by the focus
  *
  * @author Pawel Domas
  */
-public class ColibriUtilities
-{
-    /**
-     * Creates {@link ColibriConferenceIQ} with audio content and empty channel
-     * IQ. Conference ID is empty hence it can be used to created new conference
-     * on the bridge.
-     *
-     * @param focusJid conference focus owner.
-     *
-     * @return {@link ColibriConferenceIQ} with audio content and empty channel
-     *         IQ.
-     */
-    public static ColibriConferenceIQ createConferenceIq(Jid focusJid)
-    {
-        ColibriConferenceIQ confIq = new ColibriConferenceIQ();
+public class ColibriUtilities {
+	/**
+	 * Creates {@link ColibriConferenceIQ} with audio content and empty channel IQ.
+	 * Conference ID is empty hence it can be used to created new conference on the
+	 * bridge.
+	 *
+	 * @param focusJid conference focus owner.
+	 *
+	 * @return {@link ColibriConferenceIQ} with audio content and empty channel IQ.
+	 */
+	public static ColibriConferenceIQ createConferenceIq(Jid focusJid) {
+		ColibriConferenceIQ confIq = new ColibriConferenceIQ();
 
-        confIq.setFrom(focusJid);
+		confIq.setFrom(focusJid);
 
-        ColibriConferenceIQ.Content audioContent
-            = new ColibriConferenceIQ.Content(MediaType.AUDIO.toString());
+		ColibriConferenceIQ.Content audioContent = new ColibriConferenceIQ.Content(MediaType.AUDIO.toString());
 
-        ColibriConferenceIQ.Channel channel
-            = new ColibriConferenceIQ.Channel();
+		ColibriConferenceIQ.Channel channel = new ColibriConferenceIQ.Channel();
 
-        audioContent.addChannel(channel);
+		audioContent.addChannel(channel);
 
-        confIq.addContent(audioContent);
+		confIq.addContent(audioContent);
 
-        return confIq;
-    }
+		return confIq;
+	}
 }

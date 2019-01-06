@@ -20,17 +20,17 @@ package org.jitsi.videobridge.util;
  *
  * @author Boris Grozev
  */
-public interface Expireable
-{
-    /**
-     * Checks whether this instance is ready to be expired.
-     * @return {@code true} if this instance is ready to be expired, and
-     * {@code false} otherwise.
-     */
-    boolean shouldExpire();
+public interface Expireable {
+	/**
+	 * Checks whether this instance is ready to be expired.
+	 * 
+	 * @return {@code true} if this instance is ready to be expired, and
+	 *         {@code false} otherwise.
+	 */
+	boolean shouldExpire();
 
-    /**
-     * Tries to expire this {@link Expireable}. Thread safe.
-     */
-    void safeExpire();
+	/**
+	 * Tries to expire this {@link Expireable}. Thread safe.
+	 */
+	void safeExpire();
 }
