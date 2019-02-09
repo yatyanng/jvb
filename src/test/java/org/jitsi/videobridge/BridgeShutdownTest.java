@@ -26,6 +26,7 @@ import org.jivesoftware.smack.packet.XMPPError;
 import org.jivesoftware.smack.util.PacketParserUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
@@ -41,6 +42,7 @@ import net.java.sip.communicator.service.shutdown.ShutdownService;
  *
  * @author Pawel Domas
  */
+@Ignore
 public class BridgeShutdownTest {
 	/**
 	 * Tested <tt>Videobridge</tt> instance.
