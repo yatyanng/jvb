@@ -92,6 +92,7 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>jicoco</artifactId>
       <version>1.1-20180821.201527-7</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
