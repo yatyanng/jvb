@@ -24,12 +24,12 @@
     <smack.version>4.2.2-b1c107f</smack.version>
   </properties>
 
-  <dependencyManagement>
-    <dependencies>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
+  	<dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>jicoco</artifactId>
+      <version>1.1-20180821.201527-7</version>
+    </dependency>
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
       <artifactId>json-simple</artifactId>
@@ -89,13 +89,13 @@
       <version>2.0.0-20181129.205550-18</version>
     </dependency>
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>${project.groupId}</groupId> 
       <artifactId>jicoco</artifactId>
       <version>1.1-20180821.201527-7</version>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>${project.groupId}</groupId>
+      <groupId>${project.groupId}</groupId> 
       <artifactId>jitsi-android-osgi</artifactId>
       <version>1.0-20180322.162617-2</version>
     </dependency>
